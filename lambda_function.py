@@ -57,6 +57,14 @@ def lambda_handler(event, context):
                     reason='The properties KeyId and PlainText must not be empty'
                 )
 
+        # If PlaintText is RSA key
+        plainText = event['ResourceProperties']['PlainText']
+        r = re.compile('^(-----BEGIN RSA PRIVATE KEY-----)(.*)(-----END RSA PRIVATE KEY-----)$')
+        if r.match(plainText):
+            m = r.search(plainText)
+            body = m.group(2).replace(" ", "\n")
+            plainText = "%s%s%s" % (m.group(1), body, m.group(3))
+
         client = boto3.client('kms')
         encrypted = client.encrypt(
             KeyId=event['ResourceProperties']['KeyId'],
